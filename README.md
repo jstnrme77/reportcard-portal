@@ -25,6 +25,7 @@ A responsive dashboard mockup built with Next.js and Tailwind CSS for link build
 
 - Node.js 14.x or higher
 - npm or yarn
+- Airtable account with API key
 
 ### Installation
 
@@ -37,7 +38,14 @@ npm install
 yarn install
 ```
 
-3. Run the development server:
+3. Create a `.env.local` file with your Airtable credentials:
+
+```
+NEXT_PUBLIC_AIRTABLE_TOKEN=your_airtable_token
+NEXT_PUBLIC_AIRTABLE_BASE_ID=your_airtable_base_id
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
@@ -45,7 +53,7 @@ npm run dev
 yarn dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Project Structure
 
@@ -64,29 +72,51 @@ The dashboard follows a minimalist design approach with:
 - Clear typography hierarchy
 - Responsive layout for all device sizes
 
-## Deployment to GitHub Pages
+## Deployment to Netlify
 
-### Automatic Deployment
+### Option 1: Deploy from Git
 
-This project is configured to automatically deploy to GitHub Pages when changes are pushed to the main branch. The deployment process is handled by GitHub Actions.
+1. Push your code to a Git repository (GitHub, GitLab, or Bitbucket)
+2. Log in to Netlify and click "New site from Git"
+3. Select your repository and configure the build settings:
+   - Build command: `npm run build`
+   - Publish directory: `.next`
+4. Add your environment variables in the Netlify dashboard:
+   - NEXT_PUBLIC_AIRTABLE_TOKEN
+   - NEXT_PUBLIC_AIRTABLE_BASE_ID
+5. Click "Deploy site"
 
-### Manual Deployment
+### Option 2: Deploy using Netlify CLI
 
-To manually deploy the project to GitHub Pages:
-
-1. Build the project:
+1. Install the Netlify CLI:
 
 ```bash
-npm run export
+npm install -g netlify-cli
 ```
 
-2. The static files will be generated in the `out` directory.
+2. Build your application:
 
-3. Push the contents of the `out` directory to the `gh-pages` branch of your repository.
+```bash
+npm run build
+```
+
+3. Deploy to Netlify:
+
+```bash
+netlify deploy
+```
+
+4. Follow the prompts to create a new site or select an existing one
+5. When asked for the publish directory, enter `.next`
+6. Preview your site and then deploy to production:
+
+```bash
+netlify deploy --prod
+```
 
 ### Accessing the Deployed Site
 
-Once deployed, the site will be available at: `https://[your-github-username].github.io/reportcard-portal/`
+Once deployed, the site will be available at the URL provided by Netlify, typically in the format: `https://your-site-name.netlify.app`
 
 ## License
 

@@ -92,7 +92,7 @@ const Reports: React.FC = () => {
   };
 
   // Get unique months for filter options
-  const months = [...new Set(reportsData.map((report) => report.month))];
+  const months = Array.from(new Set(reportsData.map((report) => report.month)));
 
   // Handle file upload
   const handleUpload = () => {
@@ -104,7 +104,7 @@ const Reports: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">Reporting History</h1>
-        
+
         <div className="mt-4 md:mt-0">
           <button onClick={handleUpload} className="btn btn-primary flex items-center">
             <FiUpload className="mr-2" />
@@ -166,19 +166,19 @@ const Reports: React.FC = () => {
                   {report.serviceType}
                 </span>
               </div>
-              
+
               <div className="flex-grow">
                 <p className="text-sm text-secondary-600 dark:text-secondary-400 mb-4">
                   {report.notes}
                 </p>
               </div>
-              
+
               <div className="mt-4 pt-4 border-t border-secondary-200 dark:border-secondary-700 flex justify-between items-center">
                 <span className="text-xs text-secondary-500 dark:text-secondary-400">
                   Created: {new Date(report.createdAt).toLocaleDateString()}
                 </span>
-                <a 
-                  href={report.pdfUrl} 
+                <a
+                  href={report.pdfUrl}
                   className="btn btn-secondary text-sm py-1.5 flex items-center"
                   target="_blank"
                   rel="noopener noreferrer"

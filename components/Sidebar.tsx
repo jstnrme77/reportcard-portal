@@ -1,16 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { 
-  FiHome, 
-  FiCheckCircle, 
-  FiLink, 
-  FiFileText, 
+import {
+  FiHome,
+  FiCheckCircle,
+  FiLink,
+  FiFileText,
   FiSettings,
   FiMenu,
-  FiX
+  FiX,
+  FiDatabase
 } from 'react-icons/fi';
-import { useState } from 'react';
 
 const Sidebar: React.FC = () => {
   const router = useRouter();
@@ -86,7 +86,17 @@ const Sidebar: React.FC = () => {
           })}
         </nav>
 
-        <div className="p-4 border-t border-secondary-200 dark:border-secondary-700">
+        <div className="p-4 border-t border-secondary-200 dark:border-secondary-700 space-y-4">
+          {/* Airtable Connection Status */}
+          <Link
+            href="/settings"
+            className="flex items-center px-3 py-2 text-xs rounded-md bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/30"
+          >
+            <FiDatabase className="mr-2 h-4 w-4" />
+            <span>Airtable Connected</span>
+          </Link>
+
+          {/* User Profile */}
           <div className="flex items-center">
             <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white">
               <span className="text-sm font-medium">JD</span>

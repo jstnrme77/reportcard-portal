@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { FiSave, FiBell, FiMoon, FiSun } from 'react-icons/fi';
+import { FiSave, FiBell, FiMoon, FiSun, FiDatabase } from 'react-icons/fi';
+import AirtableStatus from '../components/AirtableStatus';
 
 const Settings: React.FC = () => {
   // Mock settings state
@@ -17,6 +18,10 @@ const Settings: React.FC = () => {
       name: 'John Doe',
       email: 'john.doe@example.com',
       role: 'Account Manager',
+    },
+    airtable: {
+      token: process.env.NEXT_PUBLIC_AIRTABLE_TOKEN || '',
+      baseId: process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID || ''
     }
   });
 
@@ -26,7 +31,7 @@ const Settings: React.FC = () => {
       ...settings,
       [category]: {
         ...settings[category as keyof typeof settings],
-        [setting]: !settings[category as keyof typeof settings][setting as any],
+        [setting]: !((settings[category as keyof typeof settings] as any)[setting]),
       },
     });
   };
@@ -41,9 +46,9 @@ const Settings: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">Settings</h1>
-        
+
         <div className="mt-4 md:mt-0">
-          <button 
+          <button
             onClick={handleSaveSettings}
             className="btn btn-primary flex items-center"
           >
@@ -56,7 +61,7 @@ const Settings: React.FC = () => {
       {/* Account Settings */}
       <div className="card">
         <h2 className="text-lg font-semibold mb-4">Account Information</h2>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
@@ -75,7 +80,7 @@ const Settings: React.FC = () => {
               })}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
               Email
@@ -93,7 +98,7 @@ const Settings: React.FC = () => {
               })}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
               Role
@@ -112,7 +117,7 @@ const Settings: React.FC = () => {
       {/* Notification Settings */}
       <div className="card">
         <h2 className="text-lg font-semibold mb-4">Notification Preferences</h2>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -123,8 +128,8 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="sr-only peer"
                 checked={settings.notifications.emailAlerts}
                 onChange={() => handleToggleChange('notifications', 'emailAlerts')}
@@ -132,7 +137,7 @@ const Settings: React.FC = () => {
               <div className="w-11 h-6 bg-secondary-200 peer-focus:outline-none rounded-full peer dark:bg-secondary-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
             </label>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <FiBell className="text-secondary-600 dark:text-secondary-400 mr-3" />
@@ -142,8 +147,8 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="sr-only peer"
                 checked={settings.notifications.appNotifications}
                 onChange={() => handleToggleChange('notifications', 'appNotifications')}
@@ -151,7 +156,7 @@ const Settings: React.FC = () => {
               <div className="w-11 h-6 bg-secondary-200 peer-focus:outline-none rounded-full peer dark:bg-secondary-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
             </label>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <FiBell className="text-secondary-600 dark:text-secondary-400 mr-3" />
@@ -161,8 +166,8 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="sr-only peer"
                 checked={settings.notifications.weeklyDigest}
                 onChange={() => handleToggleChange('notifications', 'weeklyDigest')}
@@ -176,7 +181,7 @@ const Settings: React.FC = () => {
       {/* Display Settings */}
       <div className="card">
         <h2 className="text-lg font-semibold mb-4">Display Preferences</h2>
-        
+
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -191,8 +196,8 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="sr-only peer"
                 checked={settings.display.darkMode}
                 onChange={() => handleToggleChange('display', 'darkMode')}
@@ -200,7 +205,7 @@ const Settings: React.FC = () => {
               <div className="w-11 h-6 bg-secondary-200 peer-focus:outline-none rounded-full peer dark:bg-secondary-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
             </label>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <svg className="w-5 h-5 text-secondary-600 dark:text-secondary-400 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -212,8 +217,8 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="sr-only peer"
                 checked={settings.display.compactView}
                 onChange={() => handleToggleChange('display', 'compactView')}
@@ -222,6 +227,68 @@ const Settings: React.FC = () => {
             </label>
           </div>
         </div>
+      </div>
+
+      {/* Airtable Integration */}
+      <div className="card">
+        <h2 className="text-lg font-semibold mb-4 flex items-center">
+          <FiDatabase className="mr-2 text-primary-600" />
+          Airtable Integration
+        </h2>
+
+        <p className="text-secondary-600 dark:text-secondary-400 mb-6">
+          Connect your Airtable base to display real data in the dashboard. You'll need your Airtable API key and Base ID.
+        </p>
+
+        <div className="space-y-4 mb-6">
+          <div>
+            <label htmlFor="token" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
+              Airtable Token
+            </label>
+            <input
+              id="token"
+              type="password"
+              className="w-full p-2 border border-secondary-300 dark:border-secondary-700 rounded-md bg-white dark:bg-secondary-800"
+              value={settings.airtable.token}
+              onChange={(e) => setSettings({
+                ...settings,
+                airtable: {
+                  ...settings.airtable,
+                  token: e.target.value
+                }
+              })}
+              placeholder="Enter your Airtable token"
+            />
+            <p className="text-xs text-secondary-500 mt-1">
+              Find your token in your Airtable account settings under API section.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="baseId" className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
+              Airtable Base ID
+            </label>
+            <input
+              id="baseId"
+              type="text"
+              className="w-full p-2 border border-secondary-300 dark:border-secondary-700 rounded-md bg-white dark:bg-secondary-800"
+              value={settings.airtable.baseId}
+              onChange={(e) => setSettings({
+                ...settings,
+                airtable: {
+                  ...settings.airtable,
+                  baseId: e.target.value
+                }
+              })}
+              placeholder="Enter your Airtable Base ID"
+            />
+            <p className="text-xs text-secondary-500 mt-1">
+              Find your Base ID in the Airtable API documentation for your base.
+            </p>
+          </div>
+        </div>
+
+        <AirtableStatus token={settings.airtable.token} baseId={settings.airtable.baseId} />
       </div>
     </div>
   );
