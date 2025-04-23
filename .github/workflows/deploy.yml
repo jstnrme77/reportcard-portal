@@ -26,9 +26,22 @@ jobs:
 
       - name: Build and Export 🔧
         run: npm run export
+        env:
+          NODE_ENV: production
 
       - name: Add .nojekyll file 📄
         run: touch out/.nojekyll
+
+      - name: Check build output 🔍
+        run: |
+          echo "Checking build output..."
+          ls -la out/
+          if [ -f out/index.html ]; then
+            echo "✅ index.html exists"
+          else
+            echo "❌ index.html does not exist"
+            exit 1
+          fi
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4

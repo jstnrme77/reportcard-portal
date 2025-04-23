@@ -9,6 +9,8 @@ const nextConfig = {
   },
   // Disable server-side features since GitHub Pages is static
   trailingSlash: true,
+  // Ensure the app is treated as a static site
+  distDir: 'out',
 };
 
 module.exports = nextConfig;
