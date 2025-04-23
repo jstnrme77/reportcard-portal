@@ -64,6 +64,30 @@ The dashboard follows a minimalist design approach with:
 - Clear typography hierarchy
 - Responsive layout for all device sizes
 
+## Deployment to GitHub Pages
+
+### Automatic Deployment
+
+This project is configured to automatically deploy to GitHub Pages when changes are pushed to the main branch. The deployment process is handled by GitHub Actions.
+
+### Manual Deployment
+
+To manually deploy the project to GitHub Pages:
+
+1. Build the project:
+
+```bash
+npm run export
+```
+
+2. The static files will be generated in the `out` directory.
+
+3. Push the contents of the `out` directory to the `gh-pages` branch of your repository.
+
+### Accessing the Deployed Site
+
+Once deployed, the site will be available at: `https://[your-github-username].github.io/reportcard-portal/`
+
 ## License
 
 This project is licensed under the MIT License.

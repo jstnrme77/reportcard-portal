@@ -94,6 +94,20 @@ The dashboard is built using:
 - React hooks for state management
 - Context API for global state
 
+## Deployment
+
+### GitHub Pages Configuration
+- The project is configured for deployment to GitHub Pages
+- Static site generation using Next.js export functionality
+- Automated deployment via GitHub Actions workflow
+- Base path and asset prefix configured for repository subdirectory
+
+### Deployment Process
+- Automatic deployment on push to main branch
+- Manual deployment available through npm run export
+- Static files generated in the out directory
+- GitHub Pages serves content from the gh-pages branch
+
 ## Future Enhancements
 - Authentication system
 - Real-time data updates

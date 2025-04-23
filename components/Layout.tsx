@@ -13,11 +13,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Head>
         <title>Dashboard Portal</title>
         <meta name="description" content="Dashboard for link building and reporting" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="./favicon.ico" />
       </Head>
 
       <Sidebar />
-      
+
       <div className="flex-1 flex flex-col">
         <Header />
         <main className="flex-1 p-4 md:p-6 overflow-auto">
