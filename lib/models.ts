@@ -39,6 +39,7 @@ export interface Approval {
   status: 'Pending' | 'Approved' | 'Rejected';
   decision_date: string | null;
   comments: string;
+  client_notes?: string;
   created_at: string;
   updated_at: string;
 }
@@ -50,6 +51,10 @@ export interface Link {
   anchor_text: string;
   placement_date: string;
   domain_rating: number;
+  estimated_traffic?: number;
+  price?: number;
+  target_page?: string;
+  link_cost?: number;
   opportunity_id?: string;
   content_type: string;
   is_reserved: boolean;

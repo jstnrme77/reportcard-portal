@@ -9,7 +9,8 @@ import {
   FiSettings,
   FiMenu,
   FiX,
-  FiDatabase
+  FiDatabase,
+  FiHelpCircle
 } from 'react-icons/fi';
 
 const Sidebar: React.FC = () => {
@@ -17,10 +18,11 @@ const Sidebar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: FiHome },
+    { name: 'Home', href: '/', icon: FiHome },
     { name: 'Approvals', href: '/approvals', icon: FiCheckCircle },
-    { name: 'Live Links', href: '/live-links', icon: FiLink },
+    { name: 'Deliverables', href: '/deliverables', icon: FiLink },
     { name: 'Reports', href: '/reports', icon: FiFileText },
+    { name: 'Help', href: '/help', icon: FiHelpCircle },
     { name: 'Settings', href: '/settings', icon: FiSettings },
   ];
 
