@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { FiDownload, FiFilter, FiRefreshCw, FiExternalLink } from 'react-icons/fi';
+import { FiDownload, FiFilter, FiRefreshCw, FiExternalLink, FiLink, FiCalendar, FiStar } from 'react-icons/fi';
 import { useAirtableData } from '../lib/hooks';
-import { Client } from '../lib/models';
+import { Link as LinkModel, Campaign } from '../lib/models';
+import { format } from 'date-fns';
 
 // Define types for our data display
-interface ClientDisplay {
+interface LinkDisplay {
   id: string;
-  companyName: string;
-  status: string;
-  liveLinks: number;
-  budgetSpent: number;
-  totalCosts: number;
-  grossProfit: number;
-  months: string[];
-  monthsWithUs: number;
-  targetURLs: string[];
+  url: string;
+  anchorText: string;
+  placementDate: Date | null;
+  formattedDate: string;
+  domainRating: number;
+  contentType: string;
+  isReserved: boolean;
+  isRecycled: boolean;
+  campaignId?: string;
+  campaignName?: string;
 }
 
 // Helper function to safely parse dates
@@ -42,75 +44,92 @@ const parseDate = (dateString: string | undefined): Date | null => {
 };
 
 const LiveLinks: React.FC = () => {
-  // Fetch clients from Airtable
-  const { data: airtableClients, isLoading, error, refetch } = useAirtableData<Client>('Clients');
+  // Fetch data from Airtable
+  const { data: airtableLinks, isLoading: linksLoading, error: linksError, refetch: refetchLinks } = useAirtableData<LinkModel>('Links');
+  const { data: campaigns, isLoading: campaignsLoading, error: campaignsError } = useAirtableData<Campaign>('Campaigns');
 
-  // State for clients data
-  const [clientsData, setClientsData] = useState<ClientDisplay[]>([]);
+  // Combined loading and error states
+  const isLoading = linksLoading || campaignsLoading;
+  const error = linksError || campaignsError;
+
+  // State for links data
+  const [linksData, setLinksData] = useState<LinkDisplay[]>([]);
 
   // Convert Airtable data to our display format
   useEffect(() => {
-    if (airtableClients && airtableClients.length > 0) {
-      // Log the first client to see the data format
-      console.log('Sample client data:', airtableClients[0]);
+    if (airtableLinks && airtableLinks.length > 0) {
+      // Create a map of campaign IDs to names for quick lookup
+      const campaignMap = new Map<string, string>();
+      if (campaigns && campaigns.length > 0) {
+        campaigns.forEach(campaign => {
+          campaignMap.set(campaign.id, campaign.name);
+        });
+      }
 
-      const formattedClients = airtableClients.map(client => {
+      const formattedLinks = airtableLinks.map(link => {
+        const placementDate = parseDate(link.placement_date);
+
         return {
-          id: client.id,
-          companyName: client['Company Name'] || 'Unnamed Client',
-          status: client.Status || 'Unknown',
-          liveLinks: client['Live Links'] || 0,
-          budgetSpent: client['Budget Spent'] || 0,
-          totalCosts: client['Total Costs'] || 0,
-          grossProfit: client['Gross Profit'] || 0,
-          months: client.Months || [],
-          monthsWithUs: client['Months With Us'] || 0,
-          targetURLs: client['Target URLs'] || []
+          id: link.id,
+          url: link.url,
+          anchorText: link.anchor_text,
+          placementDate: placementDate,
+          formattedDate: placementDate ? format(placementDate, 'MMM d, yyyy') : 'Not set',
+          domainRating: link.domain_rating || 0,
+          contentType: link.content_type || 'Unknown',
+          isReserved: link.is_reserved || false,
+          isRecycled: link.is_recycled || false,
+          campaignId: link.campaign_id,
+          campaignName: link.campaign_id ? campaignMap.get(link.campaign_id) : undefined
         };
       });
-      setClientsData(formattedClients);
+
+      setLinksData(formattedLinks);
     } else if (!isLoading) {
       // If no Airtable data and not loading, use mock data
-      setClientsData([
+      setLinksData([
         {
           id: '1',
-          companyName: 'ABC Company',
-          status: 'Active',
-          liveLinks: 12,
-          budgetSpent: 5000,
-          totalCosts: 3500,
-          grossProfit: 1500,
-          months: ['January', 'February', 'March'],
-          monthsWithUs: 3,
-          targetURLs: ['https://example.com/page1', 'https://example.com/page2']
+          url: 'https://example.com/blog/post1',
+          anchorText: 'digital marketing strategies',
+          placementDate: new Date('2023-05-15'),
+          formattedDate: 'May 15, 2023',
+          domainRating: 72,
+          contentType: 'Blog Post',
+          isReserved: false,
+          isRecycled: false,
+          campaignId: 'camp1',
+          campaignName: 'Q2 Marketing Campaign'
         },
         {
           id: '2',
-          companyName: 'XYZ Corporation',
-          status: 'Inactive',
-          liveLinks: 8,
-          budgetSpent: 3000,
-          totalCosts: 2000,
-          grossProfit: 1000,
-          months: ['January', 'February'],
-          monthsWithUs: 2,
-          targetURLs: ['https://xyz.com/blog']
+          url: 'https://techblog.com/seo-tips',
+          anchorText: 'SEO best practices',
+          placementDate: new Date('2023-06-22'),
+          formattedDate: 'Jun 22, 2023',
+          domainRating: 65,
+          contentType: 'Guest Post',
+          isReserved: true,
+          isRecycled: false,
+          campaignId: 'camp1',
+          campaignName: 'Q2 Marketing Campaign'
         },
         {
           id: '3',
-          companyName: 'Acme Inc',
-          status: 'Active',
-          liveLinks: 15,
-          budgetSpent: 7500,
-          totalCosts: 5000,
-          grossProfit: 2500,
-          months: ['February', 'March', 'April'],
-          monthsWithUs: 3,
-          targetURLs: ['https://acme.com/services', 'https://acme.com/products']
+          url: 'https://industrysite.org/resources',
+          anchorText: 'content marketing tools',
+          placementDate: new Date('2023-07-10'),
+          formattedDate: 'Jul 10, 2023',
+          domainRating: 81,
+          contentType: 'Resource Page',
+          isReserved: false,
+          isRecycled: true,
+          campaignId: 'camp2',
+          campaignName: 'Q3 Content Strategy'
         },
       ]);
     }
-  }, [airtableClients, isLoading]);
+  }, [airtableLinks, campaigns, isLoading]);
 
   // State for filters
   const [filters, setFilters] = useState({
@@ -120,57 +139,33 @@ const LiveLinks: React.FC = () => {
     opportunityType: 'all', // 'all', 'reserved', 'recycled'
   });
 
-  // Debug the month filter
-  useEffect(() => {
-    if (filters.month !== 'all') {
-      console.log('Selected month:', filters.month);
-      // Log a few sample clients to debug
-      clientsData.slice(0, 3).forEach(client => {
-        console.log(
-          'Client:', client.companyName,
-          'Months:', client.months
-        );
-      });
-    }
-  }, [filters.month, clientsData]);
-
-  // Apply filters to the clients data
-  const filteredClients = clientsData.filter((client) => {
+  // Apply filters to the links data
+  const filteredLinks = linksData.filter((link) => {
     // Month filter
-    if (filters.month !== 'all') {
-      // Check if the client has the selected month in their Months array
-      const monthNames = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      const selectedMonthIndex = parseInt(filters.month);
-      const selectedMonthName = monthNames[selectedMonthIndex];
+    if (filters.month !== 'all' && link.placementDate) {
+      const linkMonth = link.placementDate.getMonth();
+      const selectedMonth = parseInt(filters.month);
 
-      if (!client.months.includes(selectedMonthName)) {
+      if (linkMonth !== selectedMonth) {
         return false;
       }
     }
 
-    // Campaign filter - using status as a proxy for campaign
+    // Campaign filter
     if (filters.campaign !== 'all') {
-      if (client.status !== filters.campaign) return false;
+      if (link.campaignId !== filters.campaign) return false;
     }
 
-    // Content Type filter - not directly applicable, but we can use it for filtering by number of live links
+    // Content Type filter
     if (filters.contentType !== 'all') {
-      // For demonstration, let's categorize by number of live links
-      if (filters.contentType === 'Blog Post' && client.liveLinks < 5) return false;
-      if (filters.contentType === 'Guest Post' && (client.liveLinks < 5 || client.liveLinks >= 10)) return false;
-      if (filters.contentType === 'Resource Page' && client.liveLinks < 10) return false;
+      if (link.contentType !== filters.contentType) return false;
     }
 
     // Opportunity Type filter
     if (filters.opportunityType === 'reserved') {
-      // Consider active clients as "reserved"
-      if (client.status !== 'Active') return false;
+      if (!link.isReserved) return false;
     } else if (filters.opportunityType === 'recycled') {
-      // Consider inactive clients as "recycled"
-      if (client.status !== 'Inactive') return false;
+      if (!link.isRecycled) return false;
     }
 
     return true;
@@ -185,9 +180,13 @@ const LiveLinks: React.FC = () => {
   };
 
   // Get unique values for filter options
-  const statuses = Array.from(new Set(clientsData.map((client) => client.status))).filter(Boolean);
-  // For content types, we'll use predefined values since we're using it for live links categorization
-  const contentTypes = ['Blog Post', 'Guest Post', 'Resource Page'];
+  const campaignOptions = campaigns ? campaigns.map(campaign => ({
+    id: campaign.id,
+    name: campaign.name
+  })) : [];
+
+  // Get unique content types from the links data
+  const contentTypes = Array.from(new Set(linksData.map(link => link.contentType))).filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -196,7 +195,7 @@ const LiveLinks: React.FC = () => {
 
         <div className="mt-4 md:mt-0 flex space-x-3">
           <button
-            onClick={() => refetch()}
+            onClick={() => refetchLinks()}
             className="btn btn-secondary flex items-center"
             disabled={isLoading}
           >
@@ -255,9 +254,9 @@ const LiveLinks: React.FC = () => {
               onChange={(e) => handleFilterChange('campaign', e.target.value)}
             >
               <option value="all">All Campaigns</option>
-              {statuses.map((status) => (
-                <option key={status} value={status}>
-                  {status}
+              {campaignOptions.map((campaign) => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.name}
                 </option>
               ))}
             </select>
@@ -304,90 +303,123 @@ const LiveLinks: React.FC = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Company Name</th>
+                <th>URL</th>
+                <th>Anchor Text</th>
+                <th>Placement Date</th>
+                <th>Domain Rating</th>
+                <th>Content Type</th>
+                <th>Campaign</th>
                 <th>Status</th>
-                <th>Live Links</th>
-                <th>Budget Spent</th>
-                <th>Total Costs</th>
-                <th>Gross Profit</th>
-                <th>Months With Us</th>
-                <th>Target URLs</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8">
+                  <td colSpan={7} className="text-center py-8">
                     <div className="flex justify-center items-center">
                       <FiRefreshCw className="animate-spin mr-2" />
-                      Loading clients...
+                      Loading links...
                     </div>
                   </td>
                 </tr>
-              ) : filteredClients.length > 0 ? (
-                filteredClients.map((client) => (
-                  <tr key={client.id}>
-                    <td className="font-medium">
-                      {client.companyName}
+              ) : filteredLinks.length > 0 ? (
+                filteredLinks.map((link) => (
+                  <tr key={link.id}>
+                    <td className="max-w-xs truncate">
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary-600 hover:text-primary-700 hover:underline flex items-center"
+                      >
+                        <FiExternalLink className="mr-1 flex-shrink-0" />
+                        <span className="truncate">{link.url}</span>
+                      </a>
+                    </td>
+                    <td className="font-medium max-w-xs truncate">
+                      "{link.anchorText}"
                     </td>
                     <td>
-                      <span className={`badge ${
-                        client.status === 'Active' ? 'badge-approved' :
-                        client.status === 'Inactive' ? 'badge-rejected' :
-                        'badge-pending'
-                      }`}>
-                        {client.status}
-                      </span>
+                      <div className="flex items-center">
+                        <FiCalendar className="text-secondary-400 mr-1.5" />
+                        {link.formattedDate}
+                      </div>
                     </td>
                     <td className="text-center">
-                      {client.liveLinks}
+                      <div className="flex items-center justify-center">
+                        <FiStar className={`mr-1 ${
+                          link.domainRating >= 70 ? 'text-yellow-500' :
+                          link.domainRating >= 50 ? 'text-primary-500' :
+                          'text-secondary-400'
+                        }`} />
+                        <span>{link.domainRating}</span>
+                      </div>
                     </td>
                     <td>
-                      ${client.budgetSpent.toLocaleString()}
+                      {link.contentType}
                     </td>
                     <td>
-                      ${client.totalCosts.toLocaleString()}
+                      {link.campaignName || '-'}
                     </td>
                     <td>
-                      ${client.grossProfit.toLocaleString()}
-                    </td>
-                    <td className="text-center">
-                      {client.monthsWithUs}
-                    </td>
-                    <td>
-                      {client.targetURLs.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {client.targetURLs.slice(0, 1).map((url, index) => (
-                            <a
-                              key={index}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary-600 hover:text-primary-700 hover:underline flex items-center"
-                            >
-                              <FiExternalLink className="mr-1" />
-                              View URL
-                            </a>
-                          ))}
-                          {client.targetURLs.length > 1 && (
-                            <span className="text-xs text-secondary-500">
-                              +{client.targetURLs.length - 1} more
-                            </span>
-                          )}
-                        </div>
-                      ) : '-'}
+                      <div className="flex space-x-1">
+                        {link.isReserved && (
+                          <span className="badge badge-primary text-xs px-1.5 py-0.5">
+                            Reserved
+                          </span>
+                        )}
+                        {link.isRecycled && (
+                          <span className="badge badge-secondary text-xs px-1.5 py-0.5">
+                            Recycled
+                          </span>
+                        )}
+                        {!link.isReserved && !link.isRecycled && (
+                          <span className="badge badge-approved text-xs px-1.5 py-0.5">
+                            Placed
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-secondary-500">
-                    No clients found matching your filter criteria.
+                  <td colSpan={7} className="text-center py-8 text-secondary-500">
+                    No links found matching your filter criteria.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card p-4">
+          <h3 className="text-sm font-medium text-secondary-500 mb-1">Total Links</h3>
+          <p className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">{linksData.length}</p>
+        </div>
+
+        <div className="card p-4">
+          <h3 className="text-sm font-medium text-secondary-500 mb-1">Average Domain Rating</h3>
+          <p className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">
+            {linksData.length > 0
+              ? Math.round(linksData.reduce((sum, link) => sum + link.domainRating, 0) / linksData.length)
+              : 0}
+          </p>
+        </div>
+
+        <div className="card p-4">
+          <h3 className="text-sm font-medium text-secondary-500 mb-1">Links This Month</h3>
+          <p className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">
+            {linksData.filter(link => {
+              if (!link.placementDate) return false;
+              const now = new Date();
+              return link.placementDate.getMonth() === now.getMonth() &&
+                     link.placementDate.getFullYear() === now.getFullYear();
+            }).length}
+          </p>
         </div>
       </div>
     </div>
