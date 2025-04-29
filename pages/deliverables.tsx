@@ -14,6 +14,8 @@ interface LinkDisplay {
   formattedDate: string;
   serviceType: string;
   linkCost: number;
+  isReserved: boolean;
+  isRecycled: boolean;
 }
 
 // Helper function to safely parse dates
@@ -51,7 +53,7 @@ const Deliverables: React.FC = () => {
 
   // State for links data
   const [linksData, setLinksData] = useState<LinkDisplay[]>([]);
-  
+
   // State for budget summary
   const [budgetSummary, setBudgetSummary] = useState({
     allocated: 0,
@@ -69,6 +71,7 @@ const Deliverables: React.FC = () => {
   const [filters, setFilters] = useState({
     month: 'current',
     serviceType: 'all',
+    opportunityType: 'all', // 'all', 'reserved', 'recycled'
   });
 
   // Get current month and year
@@ -81,7 +84,7 @@ const Deliverables: React.FC = () => {
     if (airtableLinks && airtableLinks.length > 0) {
       const formattedLinks = airtableLinks.map(link => {
         const placementDate = parseDate(link.placement_date);
-        
+
         // Extract target page from URL if available
         let targetPage = 'N/A';
         if (link.target_page) {
@@ -96,12 +99,14 @@ const Deliverables: React.FC = () => {
           placementDate: placementDate,
           formattedDate: placementDate ? format(placementDate, 'MMM d, yyyy') : 'Not set',
           serviceType: link.content_type || 'Link Building',
-          linkCost: link.link_cost || 0
+          linkCost: link.link_cost || 0,
+          isReserved: link.is_reserved || false,
+          isRecycled: link.is_recycled || false
         };
       });
 
       setLinksData(formattedLinks);
-      
+
       // Calculate budget summary
       calculateBudgetSummary(formattedLinks);
     } else if (!isLoading) {
@@ -115,7 +120,9 @@ const Deliverables: React.FC = () => {
           placementDate: new Date('2023-05-15'),
           formattedDate: 'May 15, 2023',
           serviceType: 'Link Building',
-          linkCost: 350
+          linkCost: 350,
+          isReserved: false,
+          isRecycled: false
         },
         {
           id: '2',
@@ -125,7 +132,9 @@ const Deliverables: React.FC = () => {
           placementDate: new Date('2023-06-22'),
           formattedDate: 'Jun 22, 2023',
           serviceType: 'Link Building',
-          linkCost: 275
+          linkCost: 275,
+          isReserved: true,
+          isRecycled: false
         },
         {
           id: '3',
@@ -135,7 +144,9 @@ const Deliverables: React.FC = () => {
           placementDate: new Date('2023-06-10'),
           formattedDate: 'Jun 10, 2023',
           serviceType: 'Link Building',
-          linkCost: 400
+          linkCost: 400,
+          isReserved: false,
+          isRecycled: true
         },
         {
           id: '4',
@@ -145,7 +156,9 @@ const Deliverables: React.FC = () => {
           placementDate: new Date('2023-06-05'),
           formattedDate: 'Jun 5, 2023',
           serviceType: 'PPC',
-          linkCost: 1200
+          linkCost: 1200,
+          isReserved: false,
+          isRecycled: false
         },
         {
           id: '5',
@@ -155,43 +168,45 @@ const Deliverables: React.FC = () => {
           placementDate: new Date('2023-05-30'),
           formattedDate: 'May 30, 2023',
           serviceType: 'Development',
-          linkCost: 850
+          linkCost: 850,
+          isReserved: false,
+          isRecycled: false
         }
       ];
-      
+
       setLinksData(mockData);
       calculateBudgetSummary(mockData);
     }
   }, [airtableLinks, isLoading]);
-  
+
   // Calculate budget summary based on the filtered links
   const calculateBudgetSummary = (links: LinkDisplay[]) => {
     // Filter links by the selected month
     const filteredLinks = filterLinksByMonth(links, filters.month);
-    
+
     // Calculate total links delivered
     const linksDelivered = filteredLinks.length;
-    
+
     // Calculate total cost used
     const totalUsed = filteredLinks.reduce((sum, link) => sum + link.linkCost, 0);
-    
+
     // Calculate breakdown by service type
     const linkBuilding = filteredLinks
       .filter(link => link.serviceType === 'Link Building')
       .reduce((sum, link) => sum + link.linkCost, 0);
-      
+
     const ppc = filteredLinks
       .filter(link => link.serviceType === 'PPC')
       .reduce((sum, link) => sum + link.linkCost, 0);
-      
+
     const development = filteredLinks
       .filter(link => link.serviceType === 'Development')
       .reduce((sum, link) => sum + link.linkCost, 0);
-      
+
     const other = filteredLinks
       .filter(link => !['Link Building', 'PPC', 'Development'].includes(link.serviceType))
       .reduce((sum, link) => sum + link.linkCost, 0);
-    
+
     // Set budget summary
     setBudgetSummary({
       allocated: totalUsed + 1000, // Mock allocated budget (actual would come from campaign data)
@@ -209,22 +224,22 @@ const Deliverables: React.FC = () => {
   // Filter links by month
   const filterLinksByMonth = (links: LinkDisplay[], monthFilter: string) => {
     if (monthFilter === 'all') return links;
-    
+
     return links.filter(link => {
       if (!link.placementDate) return false;
-      
+
       if (monthFilter === 'current') {
-        return link.placementDate.getMonth() === currentMonth && 
+        return link.placementDate.getMonth() === currentMonth &&
                link.placementDate.getFullYear() === currentYear;
       }
-      
+
       // Handle specific month selections (format: 'YYYY-MM')
       if (monthFilter.includes('-')) {
         const [year, month] = monthFilter.split('-').map(Number);
-        return link.placementDate.getMonth() === month - 1 && 
+        return link.placementDate.getMonth() === month - 1 &&
                link.placementDate.getFullYear() === year;
       }
-      
+
       return true;
     });
   };
@@ -233,15 +248,15 @@ const Deliverables: React.FC = () => {
   const handleFilterChange = (filterName: string, value: string) => {
     const newFilters = { ...filters, [filterName]: value };
     setFilters(newFilters);
-    
+
     // Recalculate budget summary based on new filters
     calculateBudgetSummary(linksData);
   };
-  
+
   // Get unique months for filter options
   const getUniqueMonths = () => {
     const months = new Set<string>();
-    
+
     linksData.forEach(link => {
       if (link.placementDate) {
         const year = link.placementDate.getFullYear();
@@ -249,20 +264,20 @@ const Deliverables: React.FC = () => {
         months.add(`${year}-${month.toString().padStart(2, '0')}`);
       }
     });
-    
+
     return Array.from(months).sort().reverse();
   };
-  
+
   // Get unique service types for filter options
   const getUniqueServiceTypes = () => {
     const types = new Set<string>();
-    
+
     linksData.forEach(link => {
       if (link.serviceType) {
         types.add(link.serviceType);
       }
     });
-    
+
     return Array.from(types).sort();
   };
 
@@ -272,25 +287,33 @@ const Deliverables: React.FC = () => {
       // Filter by month
       if (filters.month !== 'all') {
         if (!link.placementDate) return false;
-        
+
         if (filters.month === 'current') {
-          return link.placementDate.getMonth() === currentMonth && 
+          return link.placementDate.getMonth() === currentMonth &&
                  link.placementDate.getFullYear() === currentYear;
         }
-        
+
         // Handle specific month selections (format: 'YYYY-MM')
         if (filters.month.includes('-')) {
           const [year, month] = filters.month.split('-').map(Number);
-          return link.placementDate.getMonth() === month - 1 && 
+          return link.placementDate.getMonth() === month - 1 &&
                  link.placementDate.getFullYear() === year;
         }
       }
-      
+
       // Filter by service type
       if (filters.serviceType !== 'all' && link.serviceType !== filters.serviceType) {
         return false;
       }
-      
+
+      // Filter by opportunity type
+      if (filters.opportunityType === 'reserved' && !link.isReserved) {
+        return false;
+      }
+      if (filters.opportunityType === 'recycled' && !link.isRecycled) {
+        return false;
+      }
+
       return true;
     })
     .sort((a, b) => {
@@ -323,46 +346,46 @@ const Deliverables: React.FC = () => {
       {/* Budget Summary Box */}
       <div className="card p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Budget Summary for {filters.month === 'current' ? format(new Date(), 'MMMM yyyy') : filters.month === 'all' ? 'All Time' : format(new Date(filters.month), 'MMMM yyyy')}</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
             <h3 className="text-sm font-medium text-secondary-500 mb-1">Budget Allocated</h3>
             <p className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">${budgetSummary.allocated.toLocaleString()}</p>
           </div>
-          
+
           <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
             <h3 className="text-sm font-medium text-secondary-500 mb-1">Budget Used</h3>
             <p className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">${budgetSummary.used.toLocaleString()}</p>
           </div>
-          
+
           <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
             <h3 className="text-sm font-medium text-secondary-500 mb-1">Links Delivered</h3>
             <p className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">{budgetSummary.linksDelivered}</p>
           </div>
-          
+
           <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
             <h3 className="text-sm font-medium text-secondary-500 mb-1">Remaining Budget</h3>
             <p className="text-2xl font-bold text-secondary-900 dark:text-secondary-50">${(budgetSummary.allocated - budgetSummary.used).toLocaleString()}</p>
           </div>
         </div>
-        
+
         <h3 className="text-lg font-semibold mb-3">Cost Breakdown by Service</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg">
             <h4 className="text-sm font-medium text-secondary-500 mb-1">Link Building</h4>
             <p className="text-xl font-bold text-secondary-900 dark:text-secondary-50">${budgetSummary.breakdown.linkBuilding.toLocaleString()}</p>
           </div>
-          
+
           <div className="p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg">
             <h4 className="text-sm font-medium text-secondary-500 mb-1">PPC</h4>
             <p className="text-xl font-bold text-secondary-900 dark:text-secondary-50">${budgetSummary.breakdown.ppc.toLocaleString()}</p>
           </div>
-          
+
           <div className="p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg">
             <h4 className="text-sm font-medium text-secondary-500 mb-1">Development</h4>
             <p className="text-xl font-bold text-secondary-900 dark:text-secondary-50">${budgetSummary.breakdown.development.toLocaleString()}</p>
           </div>
-          
+
           <div className="p-3 bg-secondary-100 dark:bg-secondary-800 rounded-lg">
             <h4 className="text-sm font-medium text-secondary-500 mb-1">Other</h4>
             <p className="text-xl font-bold text-secondary-900 dark:text-secondary-50">${budgetSummary.breakdown.other.toLocaleString()}</p>
@@ -411,6 +434,22 @@ const Deliverables: React.FC = () => {
               ))}
             </select>
           </div>
+
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
+              <FiFilter className="inline mr-1" />
+              Opportunity Type
+            </label>
+            <select
+              className="form-select w-full"
+              value={filters.opportunityType}
+              onChange={(e) => handleFilterChange('opportunityType', e.target.value)}
+            >
+              <option value="all">All Opportunities</option>
+              <option value="reserved">Reserved Only</option>
+              <option value="recycled">Recycled Only</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -425,13 +464,14 @@ const Deliverables: React.FC = () => {
                 <th>Target Page</th>
                 <th>Date Delivered</th>
                 <th>Service Type</th>
+                <th>Status</th>
                 <th>Link Cost</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8">
+                  <td colSpan={7} className="text-center py-8">
                     <div className="flex justify-center items-center">
                       <FiRefreshCw className="animate-spin mr-2" />
                       Loading deliverables...
@@ -483,6 +523,23 @@ const Deliverables: React.FC = () => {
                       </span>
                     </td>
                     <td>
+                      {link.isReserved && (
+                        <span className="badge badge-warning text-xs px-1.5 py-0.5 mr-1">
+                          Reserved
+                        </span>
+                      )}
+                      {link.isRecycled && (
+                        <span className="badge badge-info text-xs px-1.5 py-0.5">
+                          Recycled
+                        </span>
+                      )}
+                      {!link.isReserved && !link.isRecycled && (
+                        <span className="badge badge-secondary text-xs px-1.5 py-0.5">
+                          Standard
+                        </span>
+                      )}
+                    </td>
+                    <td>
                       <div className="flex items-center">
                         <FiDollarSign className="text-secondary-400 mr-0.5" />
                         {link.linkCost.toLocaleString()}
@@ -492,7 +549,7 @@ const Deliverables: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-secondary-500">
+                  <td colSpan={7} className="text-center py-8 text-secondary-500">
                     No deliverables found matching your filter criteria.
                   </td>
                 </tr>
